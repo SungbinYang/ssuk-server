@@ -21,7 +21,8 @@ spring:
       hibernate:
         format_sql: true
         show_sql: true
-    open-in-view: true
+        dialect: org.hibernate.dialect.MySQLDialect
+    open-in-view: false
 logging:
   level:
     org.hibernate:
