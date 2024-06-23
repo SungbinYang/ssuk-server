@@ -27,6 +27,9 @@ logging:
     org.hibernate:
       type:
         descriptor.sql: trace
+app:
+  host:
+    client: ${CLIENT_HOST}
 ---
 spring:
   config:
