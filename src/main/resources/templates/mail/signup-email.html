@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>인증코드 전송 안내</title>
+</head>
+<body>
+<header class="header" style="max-width: 600px; margin: auto; font-family: Arial, sans-serif;">
+  <div class="title" style="text-align: center; padding: 20px;">
+    <h3>SSUK</h3>
+  </div>
+</header>
+<section class="section" style="background-color: #f0f0f0; padding: 20px; text-align: center;">
+  <h1 style="margin: 20px 0;" th:text="${title}"></h1>
+  <h3 style="margin: 20px 0;" th:text="${message}"></h3>
+  <div style="display: inline-block; padding: 10px 20px; margin-top: 20px; font-size: 26px; font-weight: bold" class="link" th:text="${certificationNumber}">123456</div>
+</section>
+<footer style="text-align: center; padding: 10px;" class="footer">
+  <small>SSUK&copy; <span th:text="${year}"></span></small>
+</footer>
+</body>
+</html>
