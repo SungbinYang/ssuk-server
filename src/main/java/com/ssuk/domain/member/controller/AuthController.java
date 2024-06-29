@@ -31,7 +31,8 @@ public class AuthController {
         ObjectResource resource = new ObjectResource(response);
 
         resource.add(linkTo(AuthController.class).slash("/signup/collect-member-info").withSelfRel());
-        resource.add(linkTo(AuthController.class).slash("/signup/verify-code").withRel("confirm-verify-code"));
+        resource.add(linkTo(AuthController.class).slash("/signup/verify-code").withRel("verify-code"));
+        resource.add(linkTo(AuthController.class).slash("/signup/resend-code").withRel("resend-code"));
         resource.add(linkTo(App.class).slash("docs").slash("index.html#resources-collect-member-info").withRel("profile"));
 
         return ResponseEntity.ok(resource);
