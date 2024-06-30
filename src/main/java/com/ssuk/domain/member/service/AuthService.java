@@ -66,6 +66,8 @@ public class AuthService {
             throw new BusinessException("인증코드가 올바르지 않거나 만료되었습니다.");
         }
 
+        this.redisUtil.deleteData("resend_lock_" + email); // 확인완료 시, 재전송 로직 lock 제거
+
         this.memberCertificationNumberRepository.deleteById(email);
     }
 
@@ -83,13 +85,27 @@ public class AuthService {
     }
 
     /**
-     * 재전송 시, 기존의 데이터를 지우는 로직
+     * 인증번호의 존재 여부를 확인 후 삭제하는 로직.
+     * 존재하지 않는 경우 BusinessException 예외를 발생시킵니다.
      * @param email
      */
     private void validateResendCode(String email) {
-        Optional<MemberCertificationNumber> existingCertification = memberCertificationNumberRepository.findById(email);
+        boolean exists = memberCertificationNumberRepository.existsById(email);
 
-        existingCertification.ifPresent(cert -> memberCertificationNumberRepository.deleteById(email));
+        if (!exists) {
+            throw new BusinessException("인증번호 정보가 존재하지 않습니다.");
+        }
+
+        String lockeKey = "resend_lock_" + email;
+        boolean isLocked = this.redisUtil.hasKey(lockeKey);
+
+        if (isLocked) {
+            throw new BusinessException("재전송은 30분 후에 가능합니다.");
+        }
+
+        this.redisUtil.setData(lockeKey, "locked", 30);
+
+        memberCertificationNumberRepository.deleteById(email);
     }
 
     /**

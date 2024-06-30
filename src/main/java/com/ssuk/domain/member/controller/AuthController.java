@@ -10,10 +10,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.hateoas.MediaTypes;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 
@@ -54,7 +51,7 @@ public class AuthController {
     }
 
     @PostMapping("/signup/resend-code")
-    public ResponseEntity<ObjectResource> signupOfVerifyCode(String email) {
+    public ResponseEntity<ObjectResource> signupOfResendCode(@RequestParam(name = "email") String email) {
         this.authService.resendCode(email);
 
         SuccessCommonApiResponse response = SuccessCommonApiResponse.of("인증코드가 올바르게 재전송되었습니다.");
@@ -62,7 +59,7 @@ public class AuthController {
 
         resource.add(linkTo(AuthController.class).slash("signup").slash("resend-code").withSelfRel());
         resource.add(linkTo(AuthController.class).slash("signup").slash("setup-password").withRel("setup-password"));
-        resource.add(linkTo(App.class).slash("docs").slash("index.html#resources-verify-code").withRel("profile"));
+        resource.add(linkTo(App.class).slash("docs").slash("index.html#resources-resend-code").withRel("profile"));
 
         return ResponseEntity.ok(resource);
     }

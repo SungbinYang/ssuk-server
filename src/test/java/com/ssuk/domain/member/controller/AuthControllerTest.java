@@ -6,8 +6,10 @@ import com.ssuk.domain.member.model.request.MemberSignupCollectMemberInfoRequest
 import com.ssuk.domain.member.model.request.MemberSignupVerifyCodeRequestDto;
 import com.ssuk.domain.member.repository.MemberBaseInfoRepository;
 import com.ssuk.domain.member.repository.MemberCertificationNumberRepository;
+import com.ssuk.domain.member.service.AuthService;
 import com.ssuk.global.controller.BaseControllerTest;
 import com.ssuk.global.exception.GlobalExceptionCode;
+import com.ssuk.global.exception.custom.BusinessException;
 import com.ssuk.global.util.redis.RedisUtil;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -17,11 +19,15 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.hateoas.MediaTypes;
 import org.springframework.http.MediaType;
 
+import java.util.List;
 import java.util.stream.Stream;
 
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.*;
 import static org.springframework.http.HttpHeaders.*;
 import static org.springframework.restdocs.headers.HeaderDocumentation.*;
 import static org.springframework.restdocs.hypermedia.HypermediaDocumentation.linkWithRel;
@@ -162,7 +168,7 @@ class AuthControllerTest extends BaseControllerTest {
         MemberSignupVerifyCodeRequestDto requestDto = new MemberSignupVerifyCodeRequestDto("123456");
 
         this.mockMvc.perform(post("/api/auth/signup/verify-code")
-                        .param("email", "email@email.com")
+                        .queryParam("email", "email@email.com")
                         .contentType(MediaType.APPLICATION_JSON + ";charset=UTF-8")
                         .accept(MediaTypes.HAL_JSON + ";charset=UTF-8")
                         .content(this.objectMapper.writeValueAsString(requestDto)))
@@ -180,7 +186,7 @@ class AuthControllerTest extends BaseControllerTest {
         MemberSignupVerifyCodeRequestDto requestDto = new MemberSignupVerifyCodeRequestDto("11");
 
         this.mockMvc.perform(post("/api/auth/signup/verify-code")
-                        .param("email", "test@email.com")
+                        .queryParam("email", "test@email.com")
                         .contentType(MediaType.APPLICATION_JSON + ";charset=UTF-8")
                         .accept(MediaTypes.HAL_JSON + ";charset=UTF-8")
                         .content(this.objectMapper.writeValueAsString(requestDto)))
@@ -200,7 +206,7 @@ class AuthControllerTest extends BaseControllerTest {
         MemberSignupVerifyCodeRequestDto requestDto = new MemberSignupVerifyCodeRequestDto("111111");
 
         this.mockMvc.perform(post("/api/auth/signup/verify-code")
-                        .param("email", "test@email.com")
+                        .queryParam("email", "test@email.com")
                         .contentType(MediaType.APPLICATION_JSON + ";charset=UTF-8")
                         .accept(MediaTypes.HAL_JSON + ";charset=UTF-8")
                         .content(this.objectMapper.writeValueAsString(requestDto)))
@@ -218,7 +224,7 @@ class AuthControllerTest extends BaseControllerTest {
         MemberSignupVerifyCodeRequestDto requestDto = new MemberSignupVerifyCodeRequestDto("123456");
 
         this.mockMvc.perform(post("/api/auth/signup/verify-code")
-                        .param("email", "test@email.com")
+                        .queryParam("email", "test@email.com")
                         .contentType(MediaType.APPLICATION_JSON + ";charset=UTF-8")
                         .accept(MediaTypes.HAL_JSON + ";charset=UTF-8")
                         .content(this.objectMapper.writeValueAsString(requestDto)))
@@ -233,7 +239,7 @@ class AuthControllerTest extends BaseControllerTest {
                         preprocessRequest(prettyPrint()),
                         preprocessResponse(prettyPrint()),
                         queryParameters(
-                                parameterWithName("email").description("기본정보 입력에 입력한 회원 이메일")
+                                List.of(parameterWithName("email").description("기본정보 입력에 입력한 회원 이메일"))
                         ),
                         links(
                                 linkWithRel("self").description("자기 자신에 대한 링크"),
@@ -256,6 +262,84 @@ class AuthControllerTest extends BaseControllerTest {
                                 fieldWithPath("message").description("rest api 응답 메세제"),
                                 fieldWithPath("_links.self.href").description("자기 자신에 대한 링크"),
                                 fieldWithPath("_links.resend-code.href").description("인증코드 재전송 링크"),
+                                fieldWithPath("_links.setup-password.href").description("비밀번호 설정 링크"),
+                                fieldWithPath("_links.profile.href").description("REST API 문서에 대한 링크")
+                        )
+                ));
+    }
+
+    @Test
+    @DisplayName("회원 회원가입(이메일 인증코드 재전송) 통합 테스트 - 실패(유효하지 않은 이메일)")
+    void member_resend_code_integration_test_fail_caused_by_resend_within_30_min() throws Exception {
+        this.mockMvc.perform(post("/api/auth/signup/resend-code")
+                        .queryParam("email", "email@email.com")
+                        .contentType(MediaType.APPLICATION_JSON + ";charset=UTF-8")
+                        .accept(MediaTypes.HAL_JSON + ";charset=UTF-8"))
+                .andDo(print())
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("message").exists())
+                .andExpect(jsonPath("status").value(GlobalExceptionCode.INVALID_REQUEST_PARAMETER.getHttpStatus().name()))
+                .andExpect(jsonPath("code").value(GlobalExceptionCode.INVALID_REQUEST_PARAMETER.getCode()))
+                .andExpect(jsonPath("timestamp").exists());
+    }
+
+    @Test
+    @DisplayName("회원 회원가입(이메일 인증코드 재전송) 통합 테스트 - 실패(재전송 한번 발송 후 30분내로 재발송 시 예외)")
+    void member_resend_code_integration_test_fail_caused_by_invalid_email() throws Exception {
+
+        this.mockMvc.perform(post("/api/auth/signup/resend-code")
+                        .queryParam("email", "test@email.com")
+                        .contentType(MediaType.APPLICATION_JSON + ";charset=UTF-8")
+                        .accept(MediaTypes.HAL_JSON + ";charset=UTF-8"))
+                .andDo(print())
+                .andExpect(status().isOk());
+
+        this.mockMvc.perform(post("/api/auth/signup/resend-code")
+                        .queryParam("email", "test@email.com")
+                        .contentType(MediaType.APPLICATION_JSON + ";charset=UTF-8")
+                        .accept(MediaTypes.HAL_JSON + ";charset=UTF-8"))
+                .andDo(print())
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("message").exists())
+                .andExpect(jsonPath("status").value(GlobalExceptionCode.INVALID_REQUEST_PARAMETER.getHttpStatus().name()))
+                .andExpect(jsonPath("code").value(GlobalExceptionCode.INVALID_REQUEST_PARAMETER.getCode()))
+                .andExpect(jsonPath("timestamp").exists());
+    }
+
+    @Test
+    @DisplayName("회원 회원가입(이메일 인증코드 재전송) 통합 테스트 - 성공")
+    void member_resend_code_integration_test_success() throws Exception {
+        this.mockMvc.perform(post("/api/auth/signup/resend-code")
+                        .queryParam("email", "test@email.com")
+                        .contentType(MediaType.APPLICATION_JSON + ";charset=UTF-8")
+                        .accept(MediaTypes.HAL_JSON + ";charset=UTF-8"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("message").exists())
+                .andExpect(jsonPath("_links.self.href").exists())
+                .andExpect(jsonPath("_links.setup-password.href").exists())
+                .andExpect(jsonPath("_links.profile.href").exists())
+                .andDo(document("resend-code",
+                        preprocessRequest(prettyPrint()),
+                        preprocessResponse(prettyPrint()),
+                        queryParameters(
+                                List.of(parameterWithName("email").description("기본정보 입력에 입력한 회원 이메일"))
+                        ),
+                        links(
+                                linkWithRel("self").description("자기 자신에 대한 링크"),
+                                linkWithRel("setup-password").description("비밀번호 설정 링크"),
+                                linkWithRel("profile").description("REST API 문서에 대한 링크")
+                        ),
+                        requestHeaders(
+                                headerWithName(ACCEPT).description("accept header : application/hal+json;charset=UTF-8"),
+                                headerWithName(CONTENT_TYPE).description("content type header : application/json;charset=UTF-8")
+                        ),
+                        responseHeaders(
+                                headerWithName(CONTENT_TYPE).description("Content type : application/hal+json;charset=UTF-8")
+                        ),
+                        responseFields(
+                                fieldWithPath("message").description("rest api 응답 메세제"),
+                                fieldWithPath("_links.self.href").description("자기 자신에 대한 링크"),
                                 fieldWithPath("_links.setup-password.href").description("비밀번호 설정 링크"),
                                 fieldWithPath("_links.profile.href").description("REST API 문서에 대한 링크")
                         )
