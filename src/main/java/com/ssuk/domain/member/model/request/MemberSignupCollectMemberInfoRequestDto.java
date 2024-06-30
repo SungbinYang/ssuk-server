@@ -1,5 +1,6 @@
 package com.ssuk.domain.member.model.request;
 
+import com.ssuk.domain.member.entity.MemberBaseInfo;
 import com.ssuk.global.exception.custom.BusinessException;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;

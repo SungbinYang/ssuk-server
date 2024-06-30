@@ -1,6 +1,7 @@
 package com.ssuk.global.util.redis;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 
@@ -11,25 +12,25 @@ import java.util.Objects;
 @RequiredArgsConstructor
 public class RedisUtil {
 
-    private final StringRedisTemplate stringRedisTemplate;
+    private final RedisTemplate<String, Object> redisTemplate;
 
-    public String getData(String key) {
-        return this.stringRedisTemplate.opsForValue().get(key);
+    public Object getData(String key) {
+        return this.redisTemplate.opsForValue().get(key);
     }
 
     public void setData(String key, String value, long expiredTime) {
-        this.stringRedisTemplate.opsForValue().set(key, value, Duration.ofMinutes(expiredTime));
+        this.redisTemplate.opsForValue().set(key, value, Duration.ofMinutes(expiredTime));
     }
 
     public void deleteData(String key) {
-        this.stringRedisTemplate.delete(key);
+        this.redisTemplate.delete(key);
     }
 
     public void deleteAllData() {
-        Objects.requireNonNull(this.stringRedisTemplate.getConnectionFactory()).getConnection().serverCommands().flushAll();
+        Objects.requireNonNull(this.redisTemplate.getConnectionFactory()).getConnection().serverCommands().flushAll();
     }
 
     public boolean hasKey(String key) {
-        return Boolean.TRUE.equals(this.stringRedisTemplate.hasKey(key));
+        return Boolean.TRUE.equals(this.redisTemplate.hasKey(key));
     }
 }

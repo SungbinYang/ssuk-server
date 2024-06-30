@@ -41,7 +41,7 @@ class AuthControllerTest extends BaseControllerTest {
     }
 
     @Test
-    @DisplayName("회원가입(기본정보 수집) 통합 테스트 - 실패(잘못된 입력 값)")
+    @DisplayName("회원 회원가입(기본정보 수집) 통합 테스트 - 실패(잘못된 입력 값)")
     void member_signup_of_member_info_collection_integration_test_fail_caused_by_wrong_input() throws Exception {
         MemberSignupCollectMemberInfoRequestDto requestDto = new MemberSignupCollectMemberInfoRequestDto("양", "Y", "0", "email...");
 
@@ -61,7 +61,7 @@ class AuthControllerTest extends BaseControllerTest {
 
     @ParameterizedTest
     @MethodSource("providedTestDataForSignupOfMemberInfoCollection")
-    @DisplayName("회원가입(기본정보 수집) 통합 테스트 - 실패(유효하지 않은 입력 값)")
+    @DisplayName("회원 회원가입(기본정보 수집) 통합 테스트 - 실패(유효하지 않은 입력 값)")
     void member_signup_of_member_info_collection_integration_test_fail_caused_by_invalid_input_data(String koreanName, String englishName, String registrationNumber, String email) throws Exception {
         MemberSignupCollectMemberInfoRequestDto requestDto = new MemberSignupCollectMemberInfoRequestDto(koreanName, englishName, registrationNumber, email);
 
@@ -78,7 +78,7 @@ class AuthControllerTest extends BaseControllerTest {
     }
 
     @Test
-    @DisplayName("회원가입(기본정보 수집) 통합 테스트 - 성공")
+    @DisplayName("회원 회원가입(기본정보 수집) 통합 테스트 - 성공")
     void member_signup_of_member_info_collection_integration_test_success() throws Exception {
         MemberSignupCollectMemberInfoRequestDto requestDto = new MemberSignupCollectMemberInfoRequestDto("김철수", "KIM CHULSU", "0502283", "email@email.com");
 
@@ -91,7 +91,6 @@ class AuthControllerTest extends BaseControllerTest {
                 .andExpect(jsonPath("message").exists())
                 .andExpect(jsonPath("_links.self.href").exists())
                 .andExpect(jsonPath("_links.verify-code.href").exists())
-                .andExpect(jsonPath("_links.resend-code.href").exists())
                 .andExpect(jsonPath("_links.profile.href").exists())
                 .andDo(document("collect-member-info",
                         preprocessRequest(prettyPrint()),
@@ -99,7 +98,6 @@ class AuthControllerTest extends BaseControllerTest {
                         links(
                                 linkWithRel("self").description("자기 자신에 대한 링크"),
                                 linkWithRel("verify-code").description("인증코드 확인 링크"),
-                                linkWithRel("resend-code").description("인증코드 재전송 링크"),
                                 linkWithRel("profile").description("REST API 문서에 대한 링크")
                         ),
                         requestHeaders(
@@ -120,7 +118,6 @@ class AuthControllerTest extends BaseControllerTest {
                                 fieldWithPath("message").description("rest api 응답 메세제"),
                                 fieldWithPath("_links.self.href").description("자기 자신에 대한 링크"),
                                 fieldWithPath("_links.verify-code.href").description("인증코드 확인 링크"),
-                                fieldWithPath("_links.resend-code.href").description("인증코드 재전송 링크"),
                                 fieldWithPath("_links.profile.href").description("REST API 문서에 대한 링크")
                         )
                 ));
