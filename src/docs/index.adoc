@@ -79,3 +79,10 @@
 `POST` 요청을 사용해서 회원의 기본정보를 수집할 수 있다.
 
 operation::collect-member-info[snippets='request-fields,curl-request,http-request,request-headers,http-response,response-headers,response-fields,links']
+
+[[verify-code]]
+=== 인증번호 확인
+
+`POST` 요청을 사용해서 회원의 기본정보를 수집할 수 있다.
+
+operation::verify-code[snippets='request-fields,curl-request,http-request,request-headers,query-parameters,http-response,response-headers,response-fields,links']

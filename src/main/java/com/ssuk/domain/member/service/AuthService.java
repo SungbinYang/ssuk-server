@@ -52,6 +52,11 @@ public class AuthService {
         CompletableFuture.runAsync(() -> sendVerificationEmailAsync(requestDto));
     }
 
+    /**
+     * 인증코드 확인 비즈니스 로직
+     * @param requestDto
+     * @param email
+     */
     public void verifyCode(MemberSignupVerifyCodeRequestDto requestDto, String email) {
 
         MemberCertificationNumber memberCertificationNumber = this.memberCertificationNumberRepository.findById(email).orElseThrow(() -> new BusinessException("정상적이지 않은 방법으로 인증코드 페이지에 접속하였습니다."));
