@@ -93,3 +93,10 @@ operation::verify-code[snippets='request-fields,curl-request,http-request,reques
 `POST` 요청을 사용해서 인증번호를 재전송 할 수 있다.
 
 operation::resend-code[snippets='curl-request,http-request,request-headers,query-parameters,http-response,response-headers,response-fields,links']
+
+[[setup-password]]
+=== 비밀번호 설정
+
+`POST` 요청을 사용해서 비밀번호를 설정할 수 있다.
+
+operation::setup-password[snippets='request-fields,curl-request,http-request,request-headers,query-parameters,http-response,response-headers,response-fields,links']
