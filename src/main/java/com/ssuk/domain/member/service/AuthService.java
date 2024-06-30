@@ -21,7 +21,6 @@ import org.thymeleaf.context.Context;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
-import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 @Service
