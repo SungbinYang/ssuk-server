@@ -3,13 +3,12 @@ package com.ssuk.domain.member.controller;
 import com.ssuk.domain.member.entity.MemberBaseInfo;
 import com.ssuk.domain.member.entity.MemberCertificationNumber;
 import com.ssuk.domain.member.model.request.MemberSignupCollectMemberInfoRequestDto;
+import com.ssuk.domain.member.model.request.MemberSignupSetupPasswordRequestDto;
 import com.ssuk.domain.member.model.request.MemberSignupVerifyCodeRequestDto;
 import com.ssuk.domain.member.repository.MemberBaseInfoRepository;
 import com.ssuk.domain.member.repository.MemberCertificationNumberRepository;
-import com.ssuk.domain.member.service.AuthService;
 import com.ssuk.global.controller.BaseControllerTest;
 import com.ssuk.global.exception.GlobalExceptionCode;
-import com.ssuk.global.exception.custom.BusinessException;
 import com.ssuk.global.util.redis.RedisUtil;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -19,15 +18,12 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.hateoas.MediaTypes;
 import org.springframework.http.MediaType;
 
 import java.util.List;
 import java.util.stream.Stream;
 
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.*;
 import static org.springframework.http.HttpHeaders.*;
 import static org.springframework.restdocs.headers.HeaderDocumentation.*;
 import static org.springframework.restdocs.hypermedia.HypermediaDocumentation.linkWithRel;
@@ -341,6 +337,110 @@ class AuthControllerTest extends BaseControllerTest {
                                 fieldWithPath("message").description("rest api 응답 메세제"),
                                 fieldWithPath("_links.self.href").description("자기 자신에 대한 링크"),
                                 fieldWithPath("_links.setup-password.href").description("비밀번호 설정 링크"),
+                                fieldWithPath("_links.profile.href").description("REST API 문서에 대한 링크")
+                        )
+                ));
+    }
+
+    @Test
+    @DisplayName("회원 회원가입(비밀번호 설정 확인) 통합 테스트 - 실패(잘못된 입력값)")
+    void member_setup_password_integration_test_fail_caused_by_wrong_input() throws Exception {
+        MemberSignupSetupPasswordRequestDto requestDto = new MemberSignupSetupPasswordRequestDto("1", "1");
+
+        this.mockMvc.perform(post("/api/auth/signup/setup-password")
+                        .queryParam("email", "test@email.com")
+                        .contentType(MediaType.APPLICATION_JSON + ";charset=UTF-8")
+                        .accept(MediaTypes.HAL_JSON + ";charset=UTF-8")
+                        .content(this.objectMapper.writeValueAsString(requestDto)))
+                .andDo(print())
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("message").exists())
+                .andExpect(jsonPath("status").value(GlobalExceptionCode.INVALID_REQUEST_PARAMETER.getHttpStatus().name()))
+                .andExpect(jsonPath("code").value(GlobalExceptionCode.INVALID_REQUEST_PARAMETER.getCode()))
+                .andExpect(jsonPath("errors").exists())
+                .andExpect(jsonPath("errors").isNotEmpty())
+                .andExpect(jsonPath("timestamp").exists());
+    }
+
+    @Test
+    @DisplayName("회원 회원가입(비밀번호 설정 확인) 통합 테스트 - 실패(유효하지 않은 이메일)")
+    void member_setup_password_integration_test_fail_caused_by_invalid_email() throws Exception {
+        MemberSignupSetupPasswordRequestDto requestDto = new MemberSignupSetupPasswordRequestDto("1234A", "1234A");
+
+        this.mockMvc.perform(post("/api/auth/signup/setup-password")
+                        .queryParam("email", "email@email.com")
+                        .contentType(MediaType.APPLICATION_JSON + ";charset=UTF-8")
+                        .accept(MediaTypes.HAL_JSON + ";charset=UTF-8")
+                        .content(this.objectMapper.writeValueAsString(requestDto)))
+                .andDo(print())
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("message").exists())
+                .andExpect(jsonPath("status").value(GlobalExceptionCode.INVALID_REQUEST_PARAMETER.getHttpStatus().name()))
+                .andExpect(jsonPath("code").value(GlobalExceptionCode.INVALID_REQUEST_PARAMETER.getCode()))
+                .andExpect(jsonPath("timestamp").exists());
+    }
+
+    @Test
+    @DisplayName("회원 회원가입(비밀번호 설정 확인) 통합 테스트 - 실패(비밀번호 불일치)")
+    void member_setup_password_integration_test_fail_caused_by_not_equals_password_and_confirm_password() throws Exception {
+        MemberSignupSetupPasswordRequestDto requestDto = new MemberSignupSetupPasswordRequestDto("1234A", "1234B");
+
+        this.mockMvc.perform(post("/api/auth/signup/setup-password")
+                        .queryParam("email", "test@email.com")
+                        .contentType(MediaType.APPLICATION_JSON + ";charset=UTF-8")
+                        .accept(MediaTypes.HAL_JSON + ";charset=UTF-8")
+                        .content(this.objectMapper.writeValueAsString(requestDto)))
+                .andDo(print())
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("message").exists())
+                .andExpect(jsonPath("status").value(GlobalExceptionCode.INVALID_REQUEST_PARAMETER.getHttpStatus().name()))
+                .andExpect(jsonPath("code").value(GlobalExceptionCode.INVALID_REQUEST_PARAMETER.getCode()))
+                .andExpect(jsonPath("timestamp").exists());
+    }
+
+    @Test
+    @DisplayName("회원 회원가입(비밀번호 설정 확인) 통합 테스트 - 성공")
+    void member_setup_password_integration_test_success() throws Exception {
+        MemberSignupSetupPasswordRequestDto requestDto = new MemberSignupSetupPasswordRequestDto("1234A", "1234A");
+
+        this.mockMvc.perform(post("/api/auth/signup/setup-password")
+                        .queryParam("email", "test@email.com")
+                        .contentType(MediaType.APPLICATION_JSON + ";charset=UTF-8")
+                        .accept(MediaTypes.HAL_JSON + ";charset=UTF-8")
+                        .content(this.objectMapper.writeValueAsString(requestDto)))
+                .andDo(print())
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("message").exists())
+                .andExpect(jsonPath("_links.self.href").exists())
+                .andExpect(jsonPath("_links.login.href").exists())
+                .andExpect(jsonPath("_links.profile.href").exists())
+                .andDo(document("setup-password",
+                        preprocessRequest(prettyPrint()),
+                        preprocessResponse(prettyPrint()),
+                        queryParameters(
+                                List.of(parameterWithName("email").description("기본정보 입력에 입력한 회원 이메일"))
+                        ),
+                        links(
+                                linkWithRel("self").description("자기 자신에 대한 링크"),
+                                linkWithRel("login").description("로그인 처리 링크"),
+                                linkWithRel("profile").description("REST API 문서에 대한 링크")
+                        ),
+                        requestHeaders(
+                                headerWithName(ACCEPT).description("accept header : application/hal+json;charset=UTF-8"),
+                                headerWithName(CONTENT_TYPE).description("content type header : application/json;charset=UTF-8")
+                        ),
+                        requestFields(
+                                fieldWithPath("password").type(STRING).description("회원이 입력한 비밀번호"),
+                                fieldWithPath("confirmPassword").type(STRING).description("회원이 입력한 비밀번호(확인)")
+                        ),
+                        responseHeaders(
+                                headerWithName(LOCATION).description("Location header : URL where you can view the newly created member"),
+                                headerWithName(CONTENT_TYPE).description("Content type : application/hal+json;charset=UTF-8")
+                        ),
+                        responseFields(
+                                fieldWithPath("message").description("rest api 응답 메세제"),
+                                fieldWithPath("_links.self.href").description("자기 자신에 대한 링크"),
+                                fieldWithPath("_links.login.href").description("로그인 처리 링크"),
                                 fieldWithPath("_links.profile.href").description("REST API 문서에 대한 링크")
                         )
                 ));

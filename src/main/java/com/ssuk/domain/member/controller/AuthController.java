@@ -80,8 +80,6 @@ public class AuthController {
 
         resource.add(selfLink);
         resource.add(linkTo(AuthController.class).slash("login").withRel("login"));
-        resource.add(linkTo(AuthController.class).slash("fine-email").withRel("find-email"));
-        resource.add(linkTo(AuthController.class).slash("verify-credentials").withRel("verify-credentials"));
         resource.add(linkTo(App.class).slash("docs").slash("index.html#resources-setup-password").withRel("profile"));
 
         return ResponseEntity.created(createdUri).body(resource);
