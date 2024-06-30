@@ -21,6 +21,7 @@ import org.thymeleaf.context.Context;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 @Service
@@ -66,6 +67,29 @@ public class AuthService {
         }
 
         this.memberCertificationNumberRepository.deleteById(email);
+    }
+
+    /**
+     * 재전송 비즈니스 로직
+     * @param email
+     */
+    public void resendCode(String email) {
+        validateResendCode(email);
+
+        MemberBaseInfo memberBaseInfo = this.memberBaseInfoRepository.findById(email).orElseThrow(() -> new BusinessException("정상적이지 않은 방법으로 인증코드 페이지에 접속하였습니다."));
+        MemberSignupCollectMemberInfoRequestDto requestDto = memberBaseInfo.getMemberBaseInfo();
+
+        CompletableFuture.runAsync(() -> sendVerificationEmailAsync(requestDto));
+    }
+
+    /**
+     * 재전송 시, 기존의 데이터를 지우는 로직
+     * @param email
+     */
+    private void validateResendCode(String email) {
+        Optional<MemberCertificationNumber> existingCertification = memberCertificationNumberRepository.findById(email);
+
+        existingCertification.ifPresent(cert -> memberCertificationNumberRepository.deleteById(email));
     }
 
     /**

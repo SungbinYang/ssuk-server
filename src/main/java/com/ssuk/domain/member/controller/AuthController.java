@@ -52,4 +52,18 @@ public class AuthController {
 
         return ResponseEntity.ok(resource);
     }
+
+    @PostMapping("/signup/resend-code")
+    public ResponseEntity<ObjectResource> signupOfVerifyCode(String email) {
+        this.authService.resendCode(email);
+
+        SuccessCommonApiResponse response = SuccessCommonApiResponse.of("인증코드가 올바르게 재전송되었습니다.");
+        ObjectResource resource = new ObjectResource(response);
+
+        resource.add(linkTo(AuthController.class).slash("signup").slash("resend-code").withSelfRel());
+        resource.add(linkTo(AuthController.class).slash("signup").slash("setup-password").withRel("setup-password"));
+        resource.add(linkTo(App.class).slash("docs").slash("index.html#resources-verify-code").withRel("profile"));
+
+        return ResponseEntity.ok(resource);
+    }
 }
