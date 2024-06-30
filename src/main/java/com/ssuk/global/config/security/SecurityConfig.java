@@ -31,7 +31,7 @@ public class SecurityConfig {
 
     private final Environment environment;
 
-    private static final List<String> WHITE_LIST = List.of("/api/auth/signup", "/api/auth/login");
+    private static final List<String> WHITE_LIST = List.of("/api/auth/signup/**", "/api/auth/login");
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
