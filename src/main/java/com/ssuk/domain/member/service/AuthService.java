@@ -1,8 +1,10 @@
 package com.ssuk.domain.member.service;
 
+import com.ssuk.domain.member.entity.Member;
 import com.ssuk.domain.member.entity.MemberBaseInfo;
 import com.ssuk.domain.member.entity.MemberCertificationNumber;
 import com.ssuk.domain.member.model.request.MemberSignupCollectMemberInfoRequestDto;
+import com.ssuk.domain.member.model.request.MemberSignupSetupPasswordRequestDto;
 import com.ssuk.domain.member.model.request.MemberSignupVerifyCodeRequestDto;
 import com.ssuk.domain.member.repository.MemberBaseInfoRepository;
 import com.ssuk.domain.member.repository.MemberCertificationNumberRepository;
@@ -14,6 +16,7 @@ import com.ssuk.global.util.random.CertificationNumberGenerator;
 import com.ssuk.global.util.redis.RedisUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Async;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.thymeleaf.TemplateEngine;
@@ -21,7 +24,6 @@ import org.thymeleaf.context.Context;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 @Service
@@ -42,6 +44,8 @@ public class AuthService {
     private final RedisUtil redisUtil;
 
     private final TemplateEngine templateEngine;
+
+    private final PasswordEncoder passwordEncoder;
 
     /**
      * 회원 기본정보 유효성 검사 및 비동기 인증코드 메일 전송
@@ -106,6 +110,20 @@ public class AuthService {
         this.redisUtil.setData(lockeKey, "locked", 30);
 
         memberCertificationNumberRepository.deleteById(email);
+    }
+
+    @Transactional
+    public void setupPassword(MemberSignupSetupPasswordRequestDto requestDto, String email) {
+        MemberBaseInfo memberBaseInfo = this.memberBaseInfoRepository.findById(email).orElseThrow(() -> new BusinessException("정상적이지 않은 방법으로 인증코드 페이지에 접속하였습니다."));
+        MemberSignupCollectMemberInfoRequestDto memberSignupCollectMemberInfoRequestDto = memberBaseInfo.getMemberBaseInfo();
+
+        requestDto.validatePasswordAndConfirmPassword();
+
+        Member member = requestDto.toMember(memberSignupCollectMemberInfoRequestDto, passwordEncoder);
+
+        this.memberRepository.save(member);
+
+        this.memberBaseInfoRepository.deleteById(email);
     }
 
     /**

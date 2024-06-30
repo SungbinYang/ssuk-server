@@ -2,15 +2,19 @@ package com.ssuk.domain.member.controller;
 
 import com.ssuk.App;
 import com.ssuk.domain.member.model.request.MemberSignupCollectMemberInfoRequestDto;
+import com.ssuk.domain.member.model.request.MemberSignupSetupPasswordRequestDto;
 import com.ssuk.domain.member.model.request.MemberSignupVerifyCodeRequestDto;
 import com.ssuk.domain.member.service.AuthService;
 import com.ssuk.global.common.resource.ObjectResource;
 import com.ssuk.global.response.success.SuccessCommonApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.hateoas.Link;
 import org.springframework.hateoas.MediaTypes;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.net.URI;
 
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 
@@ -62,5 +66,24 @@ public class AuthController {
         resource.add(linkTo(App.class).slash("docs").slash("index.html#resources-resend-code").withRel("profile"));
 
         return ResponseEntity.ok(resource);
+    }
+
+    @PostMapping("/signup/setup-password")
+    public ResponseEntity<ObjectResource> signupOfSetupPassword(@Valid @RequestBody MemberSignupSetupPasswordRequestDto requestDto, String email) {
+        this.authService.setupPassword(requestDto, email);
+
+        SuccessCommonApiResponse response = SuccessCommonApiResponse.of("회원가입이 정상적으로 처리되었습니다.");
+        ObjectResource resource = new ObjectResource(response);
+
+        Link selfLink = linkTo(AuthController.class).slash("signup").slash(email).withSelfRel();
+        URI createdUri = selfLink.toUri();
+
+        resource.add(selfLink);
+        resource.add(linkTo(AuthController.class).slash("login").withRel("login"));
+        resource.add(linkTo(AuthController.class).slash("fine-email").withRel("find-email"));
+        resource.add(linkTo(AuthController.class).slash("verify-credentials").withRel("verify-credentials"));
+        resource.add(linkTo(App.class).slash("docs").slash("index.html#resources-setup-password").withRel("profile"));
+
+        return ResponseEntity.created(createdUri).body(resource);
     }
 }
